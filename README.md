@@ -10,6 +10,29 @@ Runs entirely locally. Zero paid APIs. CPU is enough.
 
 **Write-up & showcase:** https://ray98872.github.io/chargeback-dispute-agent/
 
+## Lineage: from dissertation to agent
+
+This project is a direct extension of my MSc dissertation, *[GPU-Accelerated
+Conformal Prediction](https://ray98872.github.io/papers/gpu-accelerated-conformal-prediction.pdf)*
+(Royal Holloway, 2025), which built split conformal **regression** intervals
+around KNN car-price predictions over 558,837 auction records, with the
+distance computations parallelised on the GPU via CUDA and PyTorch.
+
+The dissertation answered *"how fast and how reliably can we quantify
+uncertainty?"* This project answers the follow-up: *"what should a system be
+allowed to **do** with that uncertainty?"*
+
+| | Dissertation (2025) | This project (2026) |
+|---|---|---|
+| Task | Regression (car prices) | Classification (dispute text) |
+| Model | K-Nearest Neighbours | Fine-tuned DistilBERT |
+| Conformal output | Prediction intervals (quantile of \|y − ŷ\|) | Per-class p-values, confidence & credibility |
+| Compute story | CUDA/GPU acceleration | CPU-friendly local fine-tune |
+| Uncertainty used for | Measurement & analysis | Gating autonomous financial actions |
+
+Same statistical core — split conformal prediction with a finite-sample
+coverage guarantee — moved from measurement to decision-making.
+
 ## Architecture
 
 `generate_data.py` seeds **fintech.db** (SQLite: transactions, disputes, agent_audit_log).
@@ -104,5 +127,5 @@ git add . && git commit -m "deploy" && git push
 See `deploy/HF_SPACE_README.md` for the Space front-matter.
 
 ---
-*Portfolio project by [Ray Mahbub](https://github.com/ray98872) — MSc thesis:
-GPU-accelerated conformal prediction.*
+*Portfolio project by [Ray Mahbub](https://github.com/ray98872) — extending my MSc
+dissertation on GPU-accelerated conformal prediction into agentic decision-making.*
