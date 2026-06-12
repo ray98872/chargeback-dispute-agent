@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="An autonomous chargeback & dispute resolution agent — fine-tuned DistilBERT wrapped in split conformal prediction, gating autonomous SQL refund actions behind a calibrated 95% confidence guarantee." />
+<title>The Dispute Agent — Ray Mahbub</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%230a0a0b"/><text x="5" y="23" font-family="Georgia, serif" font-style="italic" font-size="17" fill="%23c97e4e">rm</text></svg>' />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,300..500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0a0a0b; --cream:#f2f0ea; --faint:#98948a; --dim:#5b574e;
+  --copper:#c97e4e; --copper-soft:#e0a075; --line:rgba(242,240,234,.08);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--cream);
+  font-family:"Inter",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; line-height:1.6;
+}
+.halo{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 45% at 50% -5%,rgba(201,126,78,.07),transparent)}
+.wrap{position:relative;max-width:1060px;margin:0 auto;padding:0 22px}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0}
+.wordmark{font-family:"Fraunces",Georgia,serif;font-style:italic;font-size:18px;color:var(--cream);text-decoration:none}
+header nav a{color:var(--faint);text-decoration:none;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-left:22px;transition:color .3s}
+header nav a:hover{color:var(--copper-soft)}
+.hero{padding:64px 0 40px}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(242,240,234,.04);border-radius:999px;padding:6px 14px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--copper);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,126,78,.5)}50%{box-shadow:0 0 0 5px rgba(201,126,78,0)}}
+h1{font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:600;letter-spacing:-.02em;line-height:1.06;margin:20px 0 16px;max-width:820px}
+h1 em{font-family:"Fraunces",Georgia,serif;font-weight:300;color:var(--copper)}
+.lede{color:var(--faint);max-width:660px;font-size:16px}
+.lede a{color:var(--copper-soft);text-decoration:none}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:500;text-decoration:none;transition:transform .3s var(--ease),background .3s,border-color .3s}
+.btn-solid{background:var(--copper);color:#0a0a0b}
+.btn-solid:hover{background:var(--copper-soft);transform:translateY(-2px)}
+.btn-ghost{border:1px solid var(--line);color:var(--cream)}
+.btn-ghost:hover{border-color:rgba(201,126,78,.45);transform:translateY(-2px)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:42px 0 8px}
+.stat{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:linear-gradient(180deg,rgba(242,240,234,.045),rgba(242,240,234,.018))}
+.stat b{display:block;font-size:24px;font-weight:600;color:var(--cream)}
+.stat span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+section{padding:54px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:26px}
+.sec-head i{font-family:"Fraunces",Georgia,serif;font-style:italic;color:var(--copper);font-size:14px}
+.sec-head h2{font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+.sec-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.card{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(242,240,234,.045),rgba(242,240,234,.018));box-shadow:0 -24px 70px -32px rgba(242,240,234,.07) inset;padding:24px;transition:border-color .35s var(--ease),transform .35s var(--ease)}
+.card:hover{border-color:rgba(201,126,78,.35);transform:translateY(-3px)}
+.diagram{padding:14px}
+.diagram svg{width:100%;height:auto;display:block}
+.dlabel{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--cream)}
+.dsub{font-family:"JetBrains Mono",monospace;font-size:9px;fill:#98948a}
+.dnote{font-family:"JetBrains Mono",monospace;font-size:9.5px;fill:#5b574e}
+.grid{display:grid;gap:14px}
+.two{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.three{grid-template-columns:repeat(auto-fit,minmax(235px,1fr))}
+.feat h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.feat h3 span{width:6px;height:6px;border-radius:50%;background:var(--copper);flex:none}
+.feat p{font-size:13px;color:var(--faint);margin-top:6px}
+.feat .rep{margin-top:12px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--dim)}
+.feat .rep b{color:var(--copper-soft);font-weight:400}
+.math{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--copper-soft);background:rgba(201,126,78,.07);border:1px solid rgba(201,126,78,.18);border-radius:10px;padding:12px 16px;margin:14px 0;overflow-x:auto;white-space:pre}
+.prose p{font-size:14px;color:var(--faint);margin-top:12px;max-width:720px}
+.prose p b{color:var(--cream);font-weight:500}
+.prose p:first-child{margin-top:0}
+.shot{padding:10px;overflow:hidden}
+.shot img{width:100%;display:block;border-radius:12px;border:1px solid var(--line)}
+.shot figcaption{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim);padding:12px 8px 6px}
+.ops li{list-style:none;font-size:14px;color:var(--faint);padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px}
+.ops li:first-child{border-top:none}
+.ops li::before{content:"—";color:var(--copper);flex:none}
+.ops b{color:var(--cream);font-weight:500}
+footer{margin-top:64px;border-top:1px solid var(--line);padding:26px 0 40px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+footer a{color:var(--faint);text-decoration:none}
+footer a:hover{color:var(--copper-soft)}
+.fade{opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.fade.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .fade{opacity:1;transform:none;transition:none}
+  .dot{animation:none}
+  html{scroll-behavior:auto}
+  .card:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="halo" aria-hidden="true"></div>
+<div class="wrap">
+
+<header>
+  <a class="wordmark" href="https://ray98872.github.io">ray mahbub</a>
+  <nav>
+    <a href="#architecture">Architecture</a>
+    <a href="#math">The math</a>
+    <a href="#product">Product</a>
+    <a href="#decisions">Decisions</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="pill"><span class="dot"></span> 100% local · zero paid APIs · pytorch</p>
+  <h1>An agent that refunds customers on its own — <em>but only when the statistics let it.</em></h1>
+  <p class="lede">A fine-tuned DistilBERT reads free-text chargeback disputes; <b>split conformal
+  prediction</b> turns its raw softmax into calibrated uncertainty with a finite-sample coverage
+  guarantee. Above 95% calibrated confidence the agent executes the refund itself — straight
+  into SQLite, audit-logged. Everything ambiguous lands in a human review queue. Built end-to-end
+  as a local MVP: synthetic data engine, PyTorch training loop, conformal calibration, agentic
+  runner and a Streamlit ops dashboard.</p>
+  <div class="cta">
+    <a class="btn btn-solid" href="https://github.com/ray98872/chargeback-dispute-agent">View the code →</a>
+    <a class="btn btn-ghost" href="https://huggingface.co/spaces/ray98872/chargeback-agent">Live dashboard demo</a>
+  </div>
+  <div class="stats">
+    <div class="stat fade"><b data-m="n">500</b><span>disputes processed</span></div>
+    <div class="stat fade"><b data-m="auto_rate">95.8%</b><span>resolved autonomously</span></div>
+    <div class="stat fade"><b data-m="auto_acc">100%</b><span>accuracy on auto actions</span></div>
+    <div class="stat fade"><b data-m="escalated">21</b><span>escalated to humans</span></div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="sec-head"><i>01</i><h2>Architecture</h2></div>
+  <div class="card diagram fade">
+    <svg viewBox="0 0 760 380" role="img" aria-label="Architecture diagram: a synthetic data engine seeds SQLite; a PyTorch training pipeline fine-tunes DistilBERT and computes conformal calibration scores; the agent runner classifies pending disputes and either auto-refunds via SQL or escalates to the human queue; a Streamlit dashboard reads everything.">
+      <defs>
+        <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="#5b574e"/>
+        </marker>
+        <marker id="arrc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="#c97e4e"/>
+        </marker>
+      </defs>
+
+      <!-- data engine -->
+      <rect x="20" y="30" width="180" height="64" rx="12" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="36" y="56" class="dlabel">generate_data.py</text>
+      <text x="36" y="74" class="dsub">faker · 5,000 txns · 500 disputes</text>
+
+      <!-- sqlite -->
+      <rect x="290" y="20" width="180" height="84" rx="12" fill="rgba(201,126,78,.08)" stroke="rgba(201,126,78,.4)"/>
+      <text x="306" y="48" class="dlabel" fill="#e0a075">fintech.db</text>
+      <text x="306" y="66" class="dsub">transactions · disputes</text>
+      <text x="306" y="82" class="dsub">agent_audit_log</text>
+
+      <!-- training -->
+      <rect x="20" y="160" width="180" height="84" rx="12" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="36" y="186" class="dlabel">train_model.py</text>
+      <text x="36" y="204" class="dsub">distilbert fine-tune · pytorch</text>
+      <text x="36" y="220" class="dsub">60/20/20 split · calibration</text>
+
+      <!-- classifier -->
+      <rect x="290" y="160" width="180" height="84" rx="12" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="306" y="186" class="dlabel">ai_classifier.py</text>
+      <text x="306" y="204" class="dsub">softmax → conformal p-values</text>
+      <text x="306" y="220" class="dsub">confidence · credibility · sets</text>
+
+      <!-- agent -->
+      <rect x="560" y="160" width="180" height="84" rx="12" fill="rgba(201,126,78,.08)" stroke="rgba(201,126,78,.4)"/>
+      <text x="576" y="186" class="dlabel" fill="#e0a075">agent_runner.py</text>
+      <text x="576" y="204" class="dsub">conf &gt; 95% → auto refund</text>
+      <text x="576" y="220" class="dsub">else → human queue</text>
+
+      <!-- dashboard -->
+      <rect x="290" y="296" width="180" height="64" rx="12" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.14)"/>
+      <text x="306" y="322" class="dlabel">app.py</text>
+      <text x="306" y="340" class="dsub">streamlit ops dashboard</text>
+
+      <!-- edges -->
+      <line x1="200" y1="62" x2="284" y2="62" stroke="#5b574e" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="212" y="52" class="dnote">seeds</text>
+
+      <path d="M 310 104 Q 250 130 208 158" fill="none" stroke="#5b574e" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="216" y="128" class="dnote">labelled text</text>
+
+      <line x1="200" y1="202" x2="284" y2="202" stroke="#5b574e" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="208" y="192" class="dnote">weights + scores</text>
+
+      <line x1="470" y1="202" x2="554" y2="202" stroke="#c97e4e" stroke-width="1.4" marker-end="url(#arrc)"/>
+      <text x="480" y="192" class="dnote" fill="#c97e4e">calibrated conf</text>
+
+      <path d="M 640 158 Q 600 100 476 70" fill="none" stroke="#c97e4e" stroke-width="1.4" marker-end="url(#arrc)"/>
+      <text x="560" y="100" class="dnote" fill="#c97e4e">UPDATE disputes…</text>
+
+      <path d="M 380 296 L 380 110" fill="none" stroke="#5b574e" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="390" y="280" class="dnote">reads</text>
+    </svg>
+  </div>
+</section>
+
+<section id="math">
+  <div class="sec-head"><i>02</i><h2>The math — why not just softmax?</h2></div>
+  <div class="card fade prose">
+    <p>A softmax of 0.97 is <b>not a probability you can act on</b>. Neural networks are
+    systematically over-confident, and an agent that moves money on miscalibrated scores is a
+    liability, not a product. The fix here is <b>split conformal prediction</b>: hold out a
+    calibration set the model never trained on, score how "non-conforming" each example is, and
+    judge every new dispute against that empirical distribution.</p>
+    <div class="math">nonconformity   s(x, y) = 1 − softmax_y(x)
+
+p-value per class   p_k = ( #{ s_i ≥ s(x, k) } + 1 ) / ( n + 1 )
+
+credibility  = max_k p_k          → does this input conform to anything seen?
+confidence   = 1 − second max p_k → how decisively are rivals rejected?
+prediction set @95% = { k : p_k > 0.05 }</div>
+    <p>The agent acts autonomously only when <b>confidence &gt; 0.95</b> and the 95% prediction
+    set is a <b>singleton</b>. By construction the true class falls inside the prediction set at
+    least 95% of the time on exchangeable data — a finite-sample, distribution-free guarantee, not
+    an empirical hope. Measured on the held-out test set: <b><span data-m="coverage">92.0%</span> coverage</b>
+    (n=100 — within the finite-sample variance the theory predicts around the 95% target), average
+    set size <b data-m="set_size">0.92</b>, test accuracy <b data-m="test_acc">100%</b>.</p>
+    <p>Same family of techniques as my MSc dissertation —
+    <a href="https://ray98872.github.io/papers/gpu-accelerated-conformal-prediction.pdf" style="color:var(--copper-soft);text-decoration:none">GPU-accelerated conformal prediction</a> —
+    applied to a production-shaped problem.</p>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="sec-head"><i>03</i><h2>Pipeline</h2></div>
+  <div class="grid three">
+    <div class="card feat fade">
+      <h3><span></span>Synthetic data engine</h3>
+      <p>Faker-built SQLite bank: 5,000 transactions, 500 free-text disputes across Fraud,
+      Merchant Error and Policy Violation — with shared noise clauses so classes deliberately
+      overlap and the escalation path actually exercises.</p>
+      <p class="rep">generate_data.py · <b>sqlite + faker</b></p>
+    </div>
+    <div class="card feat fade">
+      <h3><span></span>PyTorch fine-tune</h3>
+      <p>Plain training loop — no Trainer abstraction. AdamW, linear LR decay, gradient clipping,
+      stratified 60/20/20 train/calibration/test split. The calibration split is never trained on;
+      that independence is what makes the guarantee hold.</p>
+      <p class="rep">train_model.py · <b>distilbert-base-uncased</b></p>
+    </div>
+    <div class="card feat fade">
+      <h3><span></span>Agentic runner</h3>
+      <p>Iterates pending disputes, classifies, then acts: autonomous <code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--copper-soft)">UPDATE</code> to
+      "Resolved — Auto Refunded" above threshold, otherwise "Requires Human Review". Every decision
+      lands in an audit log table.</p>
+      <p class="rep">agent_runner.py · <b>500 disputes · fully audit-logged</b></p>
+    </div>
+  </div>
+</section>
+
+<section id="product">
+  <div class="sec-head"><i>04</i><h2>The product — ops dashboard</h2></div>
+  <div class="grid two">
+    <figure class="card shot fade" style="margin:0">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Dashboard overview: headline metrics from a real agent run — 500 disputes, 479 auto-resolved, 95.8% automation, 200 hours saved, 21 awaiting human review.">
+        <rect width="520" height="300" rx="12" fill="#111113"/>
+        <text x="22" y="34" class="dlabel" font-size="13">⚖ Autonomous Chargeback &amp; Dispute Resolution Agent</text>
+        <text x="22" y="52" class="dnote">distilbert · split conformal prediction · autonomous SQL actions &gt; 95% confidence</text>
+        <g font-family="JetBrains Mono,monospace">
+          <rect x="22" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
+          <text x="32" y="92" class="dsub">TOTAL</text><text x="32" y="118" fill="#f2f0ea" font-size="19">500</text>
+          <rect x="118" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
+          <text x="128" y="92" class="dsub">AUTO</text><text x="128" y="118" fill="#f2f0ea" font-size="19">479</text>
+          <rect x="214" y="70" width="98" height="62" rx="8" fill="rgba(201,126,78,.1)" stroke="rgba(201,126,78,.45)"/>
+          <text x="224" y="92" class="dsub" fill="#e0a075">AUTOMATION</text><text x="224" y="118" fill="#e0a075" font-size="19">95.8%</text>
+          <rect x="320" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
+          <text x="330" y="92" class="dsub">HRS SAVED</text><text x="330" y="118" fill="#f2f0ea" font-size="19">200</text>
+          <rect x="416" y="70" width="82" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
+          <text x="426" y="92" class="dsub">QUEUE</text><text x="426" y="118" fill="#f2f0ea" font-size="19">21</text>
+        </g>
+        <text x="22" y="166" class="dsub">AUTO-RESOLVED BY CATEGORY</text>
+        <g>
+          <text x="22" y="194" class="dsub">fraud</text>
+          <rect x="120" y="184" width="280" height="12" rx="3" fill="rgba(201,126,78,.85)"/>
+          <text x="408" y="194" class="dsub">152</text>
+          <text x="22" y="222" class="dsub">merchant err</text>
+          <rect x="120" y="212" width="296" height="12" rx="3" fill="rgba(201,126,78,.6)"/>
+          <text x="424" y="222" class="dsub">161</text>
+          <text x="22" y="250" class="dsub">policy viol</text>
+          <rect x="120" y="240" width="306" height="12" rx="3" fill="rgba(201,126,78,.4)"/>
+          <text x="434" y="250" class="dsub">166</text>
+        </g>
+        <text x="22" y="284" class="dnote">accuracy vs hidden ground truth on autonomous actions: 100% · 0 erroneous refunds</text>
+      </svg>
+      <figcaption>overview — real numbers from a full verified agent run over 500 disputes</figcaption>
+    </figure>
+    <figure class="card shot fade" style="margin:0">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Human review queue: disputes the model could not decide at the 95% level, sorted lowest confidence first, with calibrated confidence bars.">
+        <rect width="520" height="300" rx="12" fill="#111113"/>
+        <text x="22" y="34" class="dlabel" font-size="13">🧑‍⚖ Human review queue</text>
+        <text x="22" y="52" class="dnote">couldn't reject competing classes at 95% — sorted lowest confidence first</text>
+        <g font-family="JetBrains Mono,monospace" font-size="10">
+          <text x="22" y="84" class="dsub">#</text><text x="60" y="84" class="dsub">MERCHANT</text>
+          <text x="200" y="84" class="dsub">AI CLASS</text><text x="330" y="84" class="dsub">CALIBRATED CONF</text>
+          <line x1="22" y1="92" x2="498" y2="92" stroke="rgba(242,240,234,.1)"/>
+          <text x="22" y="114" fill="#98948a">462</text><text x="60" y="114" fill="#f2f0ea">Khan PLC</text>
+          <text x="200" y="114" fill="#98948a">Merchant Error</text>
+          <rect x="330" y="105" width="120" height="9" rx="2" fill="rgba(242,240,234,.07)"/>
+          <rect x="330" y="105" width="44" height="9" rx="2" fill="rgba(201,126,78,.8)"/><text x="458" y="114" fill="#98948a">0.366</text>
+          <text x="22" y="140" fill="#98948a">194</text><text x="60" y="140" fill="#f2f0ea">Burke-Griffiths</text>
+          <text x="200" y="140" fill="#98948a">Fraud</text>
+          <rect x="330" y="131" width="120" height="9" rx="2" fill="rgba(242,240,234,.07)"/>
+          <rect x="330" y="131" width="68" height="9" rx="2" fill="rgba(201,126,78,.8)"/><text x="458" y="140" fill="#98948a">0.564</text>
+          <text x="22" y="166" fill="#98948a">377</text><text x="60" y="166" fill="#f2f0ea">Hughes Group</text>
+          <text x="200" y="166" fill="#98948a">Policy Violation</text>
+          <rect x="330" y="157" width="120" height="9" rx="2" fill="rgba(242,240,234,.07)"/>
+          <rect x="330" y="157" width="86" height="9" rx="2" fill="rgba(201,126,78,.8)"/><text x="458" y="166" fill="#98948a">0.713</text>
+          <text x="22" y="192" fill="#98948a">051</text><text x="60" y="192" fill="#f2f0ea">Patel-Riley Ltd</text>
+          <text x="200" y="192" fill="#98948a">Merchant Error</text>
+          <rect x="330" y="183" width="120" height="9" rx="2" fill="rgba(242,240,234,.07)"/>
+          <rect x="330" y="183" width="103" height="9" rx="2" fill="rgba(201,126,78,.8)"/><text x="458" y="192" fill="#98948a">0.861</text>
+          <text x="22" y="218" fill="#98948a">288</text><text x="60" y="218" fill="#f2f0ea">Oliver-Evans</text>
+          <text x="200" y="218" fill="#98948a">Fraud</text>
+          <rect x="330" y="209" width="120" height="9" rx="2" fill="rgba(242,240,234,.07)"/>
+          <rect x="330" y="209" width="112" height="9" rx="2" fill="rgba(201,126,78,.8)"/><text x="458" y="218" fill="#98948a">0.931</text>
+        </g>
+        <rect x="22" y="240" width="476" height="40" rx="8" fill="rgba(201,126,78,.07)" stroke="rgba(201,126,78,.2)"/>
+        <text x="36" y="258" class="dnote" fill="#e0a075">audit trail: every decision logged with class, confidence, credibility</text>
+        <text x="36" y="272" class="dnote">AUTO_REFUND · class=Fraud · confidence=0.9901 · prediction_set=['Fraud']</text>
+      </svg>
+      <figcaption>review queue + audit log — escalation sorted by how urgently a human is needed</figcaption>
+    </figure>
+  </div>
+  <p class="lede" style="font-size:13.5px;margin-top:14px">Five tabs in the live app: auto-resolved table, human review queue, model quality
+  (backtest vs hidden ground truth + conformal coverage), the full audit trail, and a live playground
+  for classifying ad-hoc dispute text. <a href="https://huggingface.co/spaces/ray98872/chargeback-agent" style="color:var(--copper-soft);text-decoration:none">Try the live demo →</a></p>
+</section>
+
+<section id="decisions">
+  <div class="sec-head"><i>05</i><h2>Decisions that matter</h2></div>
+  <div class="card fade">
+    <ul class="ops">
+      <li><span><b>The agent never sees ground truth.</b> True labels exist only for training and
+      the dashboard's backtest panel — at decision time the agent acts purely on model output,
+      keeping the evaluation honest.</span></li>
+      <li><span><b>Threshold on calibrated confidence, not softmax.</b> The 95% gate means the
+      error rate on autonomous refunds is statistically controlled — on this run the agent was
+      <span data-m="auto_acc">100%</span> accurate on the disputes it actioned alone.</span></li>
+      <li><span><b>Escalation is a feature, not a failure.</b> The <span data-m="human_rate">4.2%</span> of disputes the
+      model couldn't decide at the 95% level are exactly the ones a human should see — sorted
+      lowest-confidence-first in the queue.</span></li>
+      <li><span><b>Audit everything.</b> An autonomous agent executing financial SQL without an
+      audit trail is a compliance incident waiting to happen. Every action is logged with its full
+      statistical justification.</span></li>
+      <li><span><b>Zero cost, fully local.</b> No paid APIs anywhere: synthetic data, a free
+      base model fine-tuned on CPU, SQLite, Streamlit. The whole MVP reruns from scratch with
+      four commands.</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Ray Mahbub — built locally, no paid APIs</span>
+  <span>
+    <a href="https://github.com/ray98872/chargeback-dispute-agent">source</a> ·
+    <a href="https://huggingface.co/spaces/ray98872/chargeback-agent">live demo</a> ·
+    <a href="https://ray98872.github.io">portfolio</a>
+  </span>
+</footer>
+
+</div>
+<script>
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+}, { threshold: 0.12 });
+document.querySelectorAll(".fade").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
