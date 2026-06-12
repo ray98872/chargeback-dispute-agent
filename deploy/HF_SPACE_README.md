@@ -3,9 +3,8 @@ title: Chargeback Dispute Agent
 emoji: ⚖️
 colorFrom: red
 colorTo: yellow
-sdk: streamlit
-sdk_version: "1.49.0"
-app_file: app.py
+sdk: docker
+app_port: 7860
 pinned: false
 license: mit
 ---
@@ -20,5 +19,6 @@ Source & write-up: https://github.com/ray98872/chargeback-dispute-agent
 
 > **Note for deployment:** copy this file to the root of your Hugging Face
 > Space as `README.md` (the YAML front-matter configures the Space), along
-> with `app.py`, `requirements.txt`, `.streamlit/`, `fintech.db`, and
-> optionally `model/` (via git-lfs) for the live playground tab.
+> with `deploy/Dockerfile` (to the root as `Dockerfile`), `app.py`,
+> `requirements.txt`, `.streamlit/`, `fintech.db`, and `model/` (via git-lfs)
+> for the live playground tab.
