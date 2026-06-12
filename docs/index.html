@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="An autonomous chargeback & dispute resolution agent — fine-tuned DistilBERT wrapped in split conformal prediction, gating autonomous SQL refund actions behind a calibrated 95% confidence guarantee." />
+<meta name="description" content="An autonomous chargeback & dispute resolution agent — extending an MSc dissertation on GPU-accelerated conformal prediction: fine-tuned DistilBERT wrapped in split conformal prediction, gating autonomous SQL refund actions behind a calibrated 95% confidence guarantee." />
 <title>The Dispute Agent — Ray Mahbub</title>
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%230a0a0b"/><text x="5" y="23" font-family="Georgia, serif" font-style="italic" font-size="17" fill="%23c97e4e">rm</text></svg>' />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -105,23 +105,26 @@ footer a:hover{color:var(--copper-soft)}
 </header>
 
 <section class="hero">
-  <p class="pill"><span class="dot"></span> 100% local · zero paid APIs · pytorch</p>
+  <p class="pill"><span class="dot"></span> extends my msc dissertation · 100% local · pytorch</p>
   <h1>An agent that refunds customers on its own — <em>but only when the statistics let it.</em></h1>
-  <p class="lede">A fine-tuned DistilBERT reads free-text chargeback disputes; <b>split conformal
-  prediction</b> turns its raw softmax into calibrated uncertainty with a finite-sample coverage
-  guarantee. Above 95% calibrated confidence the agent executes the refund itself — straight
-  into SQLite, audit-logged. Everything ambiguous lands in a human review queue. Built end-to-end
-  as a local MVP: synthetic data engine, PyTorch training loop, conformal calibration, agentic
-  runner and a Streamlit ops dashboard.</p>
+  <p class="lede">In my MSc dissertation, <a href="https://ray98872.github.io/papers/gpu-accelerated-conformal-prediction.pdf">GPU-Accelerated
+  Conformal Prediction</a>, I built split conformal regression intervals around KNN car-price
+  predictions over 558,837 auction records, parallelised with CUDA and PyTorch. This project is
+  the next step: the same statistical machinery, given consequences. A fine-tuned DistilBERT reads
+  free-text chargeback disputes, <b>split conformal prediction</b> turns its raw softmax into
+  calibrated uncertainty with the same finite-sample coverage guarantee — and above 95% calibrated
+  confidence an agent executes the refund itself, straight into SQLite, audit-logged. Everything
+  ambiguous lands in a human review queue.</p>
   <div class="cta">
     <a class="btn btn-solid" href="https://github.com/ray98872/chargeback-dispute-agent">View the code →</a>
     <a class="btn btn-ghost" href="https://huggingface.co/spaces/ray98872/chargeback-agent">Live dashboard demo</a>
+    <a class="btn btn-ghost" href="https://ray98872.github.io/papers/gpu-accelerated-conformal-prediction.pdf">Read the dissertation</a>
   </div>
   <div class="stats">
     <div class="stat fade"><b data-m="n">500</b><span>disputes processed</span></div>
-    <div class="stat fade"><b data-m="auto_rate">95.8%</b><span>resolved autonomously</span></div>
+    <div class="stat fade"><b data-m="auto_rate">93.8%</b><span>resolved autonomously</span></div>
     <div class="stat fade"><b data-m="auto_acc">100%</b><span>accuracy on auto actions</span></div>
-    <div class="stat fade"><b data-m="escalated">21</b><span>escalated to humans</span></div>
+    <div class="stat fade"><b data-m="escalated">31</b><span>escalated to humans</span></div>
   </div>
 </section>
 
@@ -212,12 +215,18 @@ prediction set @95% = { k : p_k > 0.05 }</div>
     <p>The agent acts autonomously only when <b>confidence &gt; 0.95</b> and the 95% prediction
     set is a <b>singleton</b>. By construction the true class falls inside the prediction set at
     least 95% of the time on exchangeable data — a finite-sample, distribution-free guarantee, not
-    an empirical hope. Measured on the held-out test set: <b><span data-m="coverage">92.0%</span> coverage</b>
+    an empirical hope. Measured on the held-out test set: <b><span data-m="coverage">88%</span> coverage</b>
     (n=100 — within the finite-sample variance the theory predicts around the 95% target), average
-    set size <b data-m="set_size">0.92</b>, test accuracy <b data-m="test_acc">100%</b>.</p>
-    <p>Same family of techniques as my MSc dissertation —
-    <a href="https://ray98872.github.io/papers/gpu-accelerated-conformal-prediction.pdf" style="color:var(--copper-soft);text-decoration:none">GPU-accelerated conformal prediction</a> —
-    applied to a production-shaped problem.</p>
+    set size <b data-m="set_size">0.88</b>, test accuracy <b data-m="test_acc">100%</b>.</p>
+    <p><b>How this extends the dissertation.</b> The research project answered "how fast and how
+    reliably can we quantify uncertainty?" — conformal <i>regression</i> (nonconformity = |y − ŷ|,
+    a 95th-percentile quantile widening KNN price predictions into intervals), with the distance
+    computations batched onto the GPU via CUDA. This project answers the follow-up question:
+    <i>"what should a system be allowed to do with that uncertainty?"</i> Regression intervals
+    become per-class conformal p-values; KNN becomes a fine-tuned transformer; and the calibrated
+    confidence stops being a chart in a report and becomes the gate on an autonomous financial
+    action. Same theory, same coverage guarantee — moved from measurement to decision-making.</p>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);line-height:1.9">dissertation (2025) · KNN regression · car prices · 558k rows · CUDA · prediction intervals<br/>this project&nbsp; (2026) · DistilBERT classification · dispute text · conformal p-values · autonomous agent gate</p>
   </div>
 </section>
 
@@ -252,7 +261,7 @@ prediction set @95% = { k : p_k > 0.05 }</div>
   <div class="sec-head"><i>04</i><h2>The product — ops dashboard</h2></div>
   <div class="grid two">
     <figure class="card shot fade" style="margin:0">
-      <svg viewBox="0 0 520 300" role="img" aria-label="Dashboard overview: headline metrics from a real agent run — 500 disputes, 479 auto-resolved, 95.8% automation, 200 hours saved, 21 awaiting human review.">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Dashboard overview: headline metrics from a real agent run — 500 disputes, 469 auto-resolved, 93.8% automation, 195 hours saved, 31 awaiting human review.">
         <rect width="520" height="300" rx="12" fill="#111113"/>
         <text x="22" y="34" class="dlabel" font-size="13">⚖ Autonomous Chargeback &amp; Dispute Resolution Agent</text>
         <text x="22" y="52" class="dnote">distilbert · split conformal prediction · autonomous SQL actions &gt; 95% confidence</text>
@@ -260,25 +269,25 @@ prediction set @95% = { k : p_k > 0.05 }</div>
           <rect x="22" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
           <text x="32" y="92" class="dsub">TOTAL</text><text x="32" y="118" fill="#f2f0ea" font-size="19">500</text>
           <rect x="118" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
-          <text x="128" y="92" class="dsub">AUTO</text><text x="128" y="118" fill="#f2f0ea" font-size="19">479</text>
+          <text x="128" y="92" class="dsub">AUTO</text><text x="128" y="118" fill="#f2f0ea" font-size="19">469</text>
           <rect x="214" y="70" width="98" height="62" rx="8" fill="rgba(201,126,78,.1)" stroke="rgba(201,126,78,.45)"/>
-          <text x="224" y="92" class="dsub" fill="#e0a075">AUTOMATION</text><text x="224" y="118" fill="#e0a075" font-size="19">95.8%</text>
+          <text x="224" y="92" class="dsub" fill="#e0a075">AUTOMATION</text><text x="224" y="118" fill="#e0a075" font-size="19">93.8%</text>
           <rect x="320" y="70" width="88" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
-          <text x="330" y="92" class="dsub">HRS SAVED</text><text x="330" y="118" fill="#f2f0ea" font-size="19">200</text>
+          <text x="330" y="92" class="dsub">HRS SAVED</text><text x="330" y="118" fill="#f2f0ea" font-size="19">195</text>
           <rect x="416" y="70" width="82" height="62" rx="8" fill="rgba(242,240,234,.04)" stroke="rgba(242,240,234,.1)"/>
-          <text x="426" y="92" class="dsub">QUEUE</text><text x="426" y="118" fill="#f2f0ea" font-size="19">21</text>
+          <text x="426" y="92" class="dsub">QUEUE</text><text x="426" y="118" fill="#f2f0ea" font-size="19">31</text>
         </g>
-        <text x="22" y="166" class="dsub">AUTO-RESOLVED BY CATEGORY</text>
+        <text x="22" y="166" class="dsub">DISPUTES BY CATEGORY</text>
         <g>
           <text x="22" y="194" class="dsub">fraud</text>
-          <rect x="120" y="184" width="280" height="12" rx="3" fill="rgba(201,126,78,.85)"/>
-          <text x="408" y="194" class="dsub">152</text>
+          <rect x="120" y="184" width="275" height="12" rx="3" fill="rgba(201,126,78,.85)"/>
+          <text x="403" y="194" class="dsub">159</text>
           <text x="22" y="222" class="dsub">merchant err</text>
-          <rect x="120" y="212" width="296" height="12" rx="3" fill="rgba(201,126,78,.6)"/>
-          <text x="424" y="222" class="dsub">161</text>
+          <rect x="120" y="212" width="284" height="12" rx="3" fill="rgba(201,126,78,.6)"/>
+          <text x="412" y="222" class="dsub">164</text>
           <text x="22" y="250" class="dsub">policy viol</text>
           <rect x="120" y="240" width="306" height="12" rx="3" fill="rgba(201,126,78,.4)"/>
-          <text x="434" y="250" class="dsub">166</text>
+          <text x="434" y="250" class="dsub">177</text>
         </g>
         <text x="22" y="284" class="dnote">accuracy vs hidden ground truth on autonomous actions: 100% · 0 erroneous refunds</text>
       </svg>
@@ -336,7 +345,7 @@ prediction set @95% = { k : p_k > 0.05 }</div>
       <li><span><b>Threshold on calibrated confidence, not softmax.</b> The 95% gate means the
       error rate on autonomous refunds is statistically controlled — on this run the agent was
       <span data-m="auto_acc">100%</span> accurate on the disputes it actioned alone.</span></li>
-      <li><span><b>Escalation is a feature, not a failure.</b> The <span data-m="human_rate">4.2%</span> of disputes the
+      <li><span><b>Escalation is a feature, not a failure.</b> The <span data-m="human_rate">6.2%</span> of disputes the
       model couldn't decide at the 95% level are exactly the ones a human should see — sorted
       lowest-confidence-first in the queue.</span></li>
       <li><span><b>Audit everything.</b> An autonomous agent executing financial SQL without an
